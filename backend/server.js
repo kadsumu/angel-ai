@@ -9,7 +9,9 @@ const app = express();
 
 app.use(cors());
 app.use(bodyParser.json());
-
+app.get("/", (req, res) => {
+    res.send("🚀 Angel AI Backend Running");
+});
 
 
 app.post("/chat", async (req, res) => {

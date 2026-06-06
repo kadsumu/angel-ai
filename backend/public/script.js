@@ -1,48 +1,80 @@
-const chat = document.getElementById("chat");
-const input = document.getElementById("input");
+import express from "express";
+import cors from "cors";
+import bodyParser from "body-parser";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-function addMessage(text, type) {
-    const div = document.createElement("div");
-    div.classList.add("msg", type);
-    div.innerText = text;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-}
+dotenv.config();
 
-async function send() {
+const app = express();
 
-    const text = input.value.trim();
-    if (!text) return;
+app.use(cors());
+app.use(bodyParser.json());
 
-    addMessage(text, "user");
-    input.value = "";
+// Fix __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve frontend files from public folder
+app.use(express.static(path.join(__dirname, "public")));
+
+// Home page
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+// Chat API
+app.post("/chat", async (req, res) => {
 
     try {
 
-        const res = await fetch("/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: text
-            })
+        const response = await fetch(
+            "https://api.openai.com/v1/chat/completions",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: [
+                        {
+                            role: "system",
+                            content: "You are Angel AI"
+                        },
+                        {
+                            role: "user",
+                            content: req.body.message
+                        }
+                    ]
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        console.log(JSON.stringify(data, null, 2));
+
+        res.json({
+            reply: data.choices?.[0]?.message?.content || "No response"
         });
 
-        const data = await res.json();
+    } catch (error) {
 
-        addMessage(data.reply || "No reply received", "bot");
+        console.error(error);
 
-    } catch (err) {
-
-        addMessage("❌ Error connecting to Angel AI", "bot");
-        console.error(err);
+        res.json({
+            reply: "Server Error: " + error.message
+        });
 
     }
-}
 
-input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        send();
-    }
+});
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });

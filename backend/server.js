@@ -24,37 +24,40 @@ app.get("/", (req, res) => {
 app.use(express.static("public"));
 app.post("/chat", async (req, res) => {
     try {
-        const response = await fetch(
-            "https://api.openai.com/v1/chat/completions",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o-mini",
-                    messages: [
-                        {
-                            role: "user",
-                            content: req.body.message
-                        }
-                    ]
-                })
-            }
-        );
+
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "user", content: req.body.message }
+                ]
+            })
+        });
 
         const data = await response.json();
 
+        console.log("OPENAI RESPONSE:", data);
+
+        if (!data.choices || !data.choices[0]) {
+            return res.json({
+                reply: "AI error: no response from OpenAI"
+            });
+        }
+
         res.json({
-            reply: data.choices?.[0]?.message?.content || "No response"
+            reply: data.choices[0].message.content
         });
 
     } catch (error) {
         console.error(error);
 
         res.json({
-            reply: "Server Error"
+            reply: "Server Error: " + error.message
         });
     }
 });

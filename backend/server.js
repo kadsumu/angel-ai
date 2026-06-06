@@ -7,6 +7,12 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
+const data = await response.json();
+
+console.log("OPENAI RESPONSE:");
+console.log(JSON.stringify(data, null, 2));
+
+
 const app = express();
 
 const __filename = fileURLToPath(import.meta.url);

@@ -31,44 +31,32 @@ app.get("/", (req, res) => {
 
 // Chat endpoint
 app.post("/chat", async (req, res) => {
-  try {
-    const userMessage = req.body.message;
 
-    const response = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content: "You are Angel AI, a helpful assistant."
-            },
-            {
-              role: "user",
-              content: userMessage
-            }
-          ]
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    if (!data.choices?.[0]?.message?.content) {
-      return res.json({
-        reply: "⚠️ AI response error"
-      });
+  const response = await fetch(
+    "https://api.openai.com/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "user", content: req.body.message }
+        ]
+      })
     }
+  );
 
-    res.json({
-      reply: data.choices[0].message.content
-    });
+  const data = await response.json();
+
+  console.log(JSON.stringify(data, null, 2));
+
+  res.json({
+    reply: data.choices?.[0]?.message?.content || "No response"
+  });
+});
 
   } catch (error) {
     console.error(error);
